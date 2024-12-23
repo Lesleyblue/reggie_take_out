@@ -31,8 +31,6 @@ public class SetmealController {
     @Autowired
     private CategoryService categoryService;
 
-    @Autowired
-    private SetmealDishService setmealDishService;
 
     // 新增套餐   涉及两张表，套餐表setmeal、套餐-菜品关系表 setmeal-dish
     @PostMapping
