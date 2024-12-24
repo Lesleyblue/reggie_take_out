@@ -12,6 +12,8 @@ import com.itheima.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,11 +31,10 @@ public class SetmealController {
     @Autowired
     private CategoryService categoryService;
 
-    @Autowired
-    private SetmealDishService setmealDishService;
 
     // 新增套餐   涉及两张表，套餐表setmeal、套餐-菜品关系表 setmeal-dish
     @PostMapping
+    @CacheEvict(value = "setmealCache" , allEntries = true)
     public R<String> save(@RequestBody SetmealDto setmealDto){
         setmealService.saveWithDish(setmealDto);
         return R.success(("新增套餐成功"));
@@ -76,6 +77,7 @@ public class SetmealController {
 
     // 删除套餐   只能删除停售的  删除单个和多个是同一个接口，所以传过来的id有多个
     @DeleteMapping
+    @CacheEvict(value = "setmealCache" , allEntries = true)   //删除setmealCache下的所有缓存数据
     public R<String> delete(@RequestParam List<Long> ids){
         setmealService.removeWithDish(ids);
         return R.success("套餐数据删除成功");
@@ -83,6 +85,8 @@ public class SetmealController {
 
     // 移动端---根据条件查询套餐
     @GetMapping("/list")
+    @Cacheable(value = "setmealCache", key = "#setmeal.categoryId+'_'+ #setmeal.status")
+    // setmealCache是缓存名称  #setmeal拿到的是穿过来的参数  将方法返回值放入缓存
     public R<List<Setmeal>> list(Setmeal setmeal){
         LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(setmeal.getCategoryId()!=null, Setmeal::getCategoryId,setmeal.getCategoryId());
